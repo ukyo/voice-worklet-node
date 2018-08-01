@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>voice changer example</title>
+</head>
+
+<body>
+  <div>
+    <span style="width: 100px; display: inline-block">Pitch:</span>
+    <input type="range" min="0" max="300" value="200" step="1" list="tickmarks" id="pitch">
+    <span style="width: 50px; display: inline-block" id="pitchviewer">200%</span>
+  </div>
+  <div>
+    <span style="width: 100px; display: inline-block">Formant:</span>
+    <input type="range" min="0" max="300" value="120" step="1" list="tickmarks" id="formant">
+    <span style="width: 50px; display: inline-block" id="formantviewer">120%</span>
+  </div>
+
+  <datalist id="tickmarks">
+    <option value="0" label="0%" />
+    <option value="50" />
+    <option value="100" label="100%" />
+    <option value="150" />
+    <option value="200" label="200%" />
+    <option value="250" />
+    <option value="300" label="300%" />
+  </datalist>
+
+  <script type="module">
+    import { VoiceWorkletNode } from "../dist/voice-worklet-node.js";
+
+    (async () => {
+      const context = new AudioContext();
+
+      await context.audioWorklet.addModule("../dist/voice-worklet-processor.js");
+
+      const voiceWorkletNode = new VoiceWorkletNode(context, {
+        shift: 200,
+        ratio: 120
+      });
+
+      pitch.onchange = () => {
+        voiceWorkletNode.setShift(+pitch.value);
+        pitchviewer.textContent = pitch.value + "%";
+      };
+      formant.onchange = () => {
+        voiceWorkletNode.setRatio(+formant.value);
+        formantviewer.textContent = formant.value + "%";
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const source = context.createMediaStreamSource(stream);
+      source
+        .connect(voiceWorkletNode)
+        .connect(context.destination);
+    })();
+  </script>
+</body>
+
+</html>
