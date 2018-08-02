@@ -19,8 +19,16 @@ const defaultVoiceWorkletNodeOptions: VoiceWorkletNodeOptions = {
 
 export class VoiceWorkletNode extends AudioWorkletNode {
   private _worker: Worker;
-  private _data: any;
   private _options: VoiceWorkletNodeOptions;
+
+  private _states = new Int32Array(new SharedArrayBuffer(7 * Int32Array.BYTES_PER_ELEMENT));
+  private _inputRingBuffer = new Float64Array(new SharedArrayBuffer(CONSTANTS.RING_BUFFER_BYTE_LENGTH));
+  private _outputRingBuffer = new Float64Array(new SharedArrayBuffer(CONSTANTS.RING_BUFFER_BYTE_LENGTH));
+  private _sharedBuffers = {
+    states: this._states.buffer,
+    inputRingBuffer: this._inputRingBuffer.buffer,
+    outputRingBuffer: this._outputRingBuffer.buffer
+  };
 
   constructor(context: AudioContextBase, options: VoiceWorkletNodeOptions = defaultVoiceWorkletNodeOptions) {
     super(context, "voice-worklet-processor", { ...defaultVoiceWorkletNodeOptions, ...options });
@@ -30,18 +38,15 @@ export class VoiceWorkletNode extends AudioWorkletNode {
     this._worker.onmessage = this._onWorkerInitialized.bind(this);
     this.port.onmessage = this._onProcessorInitilized.bind(this);
 
-    this._worker.postMessage({
-      message: "INITIALIZE_WORKER"
-    });
-  }
-
-  _onWorkerInitialized(eventFromWorker: MessageEvent) {
-    const data = eventFromWorker.data;
-    this._data = data;
     this.setShift(this._options.shift);
     this.setRatio(this._options.ratio);
     this.setSampleRate(this.context.sampleRate);
-    this.port.postMessage(data.SharedBuffers);
+
+    this._worker.postMessage(this._sharedBuffers);
+  }
+
+  _onWorkerInitialized(eventFromWorker: MessageEvent) {
+    this.port.postMessage(this._sharedBuffers);
   }
 
   _onProcessorInitilized(eventFromProcessor: MessageEvent) {
@@ -49,23 +54,17 @@ export class VoiceWorkletNode extends AudioWorkletNode {
   }
 
   setShift(shift: number) {
-    if (this._data) {
-      const arr = new Int32Array(this._data.SharedBuffers.states);
-      arr[STATE.SHIFT] = shift;
-    }
+    this._states[STATE.SHIFT] = shift;
   }
 
   setRatio(ratio: number) {
-    if (this._data) {
-      const arr = new Int32Array(this._data.SharedBuffers.states);
-      arr[STATE.RATIO] = ratio;
-    }
+    this._states[STATE.RATIO] = ratio;
   }
 
   setSampleRate(sampleRate: number) {
-    if (this._data) {
-      const arr = new Int32Array(this._data.SharedBuffers.states);
-      arr[STATE.SAMPLE_RATE] = Math.ceil(sampleRate / CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH) * CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH;
-    }
+    this._states[STATE.SAMPLE_RATE] =
+      Math.ceil(sampleRate / CONSTANTS.FRAMES_PER_F0_ESTIMATION_FRAME_PERIOD) *
+      CONSTANTS.FRAMES_PER_F0_ESTIMATION_FRAME_PERIOD;
+    // this._states[STATE.SAMPLE_RATE] = sampleRate;
   }
 }
