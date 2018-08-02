@@ -31,11 +31,7 @@ class VoiceWorkletProcessor extends AudioWorkletProcessor {
     });
   }
 
-  static get parameterDescriptors() {
-    return [{ name: "gain", defaultValue: 1 }];
-  }
-
-  process(inputs: Array<Array<Float32Array>>, outputs: Array<Array<Float32Array>>, params: { gain: number[] }) {
+  process(inputs: Array<Array<Float32Array>>, outputs: Array<Array<Float32Array>>) {
     if (!this._initialized) {
       return true;
     }
@@ -73,8 +69,6 @@ class VoiceWorkletProcessor extends AudioWorkletProcessor {
     }
     this._states[STATE.OUTPUT_INDEX]++;
   }
-
-  // private _
 }
 
 registerProcessor("voice-worklet-processor", VoiceWorkletProcessor);
