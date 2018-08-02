@@ -56,6 +56,7 @@ typedef struct
   DioOption *dio_option;
   CheapTrickOption *cheap_trick_option;
   D4COption *d4c_option;
+  WorldSynthesizer *synthesizer;
 
   double *freq_axis1;
   double *freq_axis2;
@@ -104,6 +105,10 @@ WorldParameters EMSCRIPTEN_KEEPALIVE *InitializeWorldParameters(int x_length, in
   world_parameters->freq_axis2 = (double *)malloc(sizeof(double) * (world_parameters->fft_size));
   world_parameters->spectrum1 = (double *)malloc(sizeof(double) * (world_parameters->fft_size));
   world_parameters->spectrum2 = (double *)malloc(sizeof(double) * (world_parameters->fft_size));
+
+  world_parameters->synthesizer = (WorldSynthesizer *)malloc(sizeof(WorldSynthesizer));
+  InitializeSynthesizer(world_parameters->fs, world_parameters->frame_period,
+                        world_parameters->fft_size, 64, 100, world_parameters->synthesizer);
 
   return world_parameters;
 }
@@ -198,12 +203,6 @@ void WaveformSynthesis2(WorldParameters *world_parameters, double *y)
 
 void WaveformSynthesis3(WorldParameters *world_parameters, double *y)
 {
-
-  WorldSynthesizer synthesizer = {0};
-  int buffer_size = 64;
-  InitializeSynthesizer(world_parameters->fs, world_parameters->frame_period,
-                        world_parameters->fft_size, buffer_size, 100, &synthesizer);
-
   int offset = 0;
   int index = 0;
   for (int i = 0; i < world_parameters->f0_length;)
@@ -211,39 +210,35 @@ void WaveformSynthesis3(WorldParameters *world_parameters, double *y)
     // Add one frame (i shows the frame index that should be added)
     if (AddParameters(&world_parameters->f0[i], 1,
                       &world_parameters->spectrogram[i], &world_parameters->aperiodicity[i],
-                      &synthesizer) == 1)
+                      world_parameters->synthesizer) == 1)
       ++i;
 
     // Synthesize speech with length of buffer_size sample.
     // It is repeated until the function returns 0
     // (it suggests that the synthesizer cannot generate speech).
-    while (Synthesis2(&synthesizer) != 0)
+    while (Synthesis2(world_parameters->synthesizer) != 0)
     {
-      index = offset * buffer_size;
-      for (int j = 0; j < buffer_size; ++j)
-        y[j + index] = synthesizer.buffer[j];
+      index = offset * world_parameters->synthesizer->buffer_size;
+      for (int j = 0; j < world_parameters->synthesizer->buffer_size; ++j)
+        y[j + index] = world_parameters->synthesizer->buffer[j];
       offset++;
     }
 
     // Check the "Lock" (Please see synthesisrealtime.h)
-    if (IsLocked(&synthesizer) == 1)
+    if (IsLocked(world_parameters->synthesizer) == 1)
     {
       break;
     }
   }
 
-  DestroySynthesizer(&synthesizer);
+  RefreshSynthesizer(world_parameters->synthesizer);
 }
 
 void EMSCRIPTEN_KEEPALIVE transform(double *x, WorldParameters *world_parameters, double shift, double ratio, double *y)
 {
   F0EstimationDio(x, world_parameters);
-  // Spectral envelope estimation
   SpectralEnvelopeEstimation(x, world_parameters);
-  // Aperiodicity estimation by D4C
   AperiodicityEstimation(x, world_parameters);
-  // Note that F0 must not be changed until all parameters are estimated.
   ParameterModification(shift, ratio, world_parameters);
-  // Synthesis 1 (conventional synthesis)
-  WaveformSynthesis(world_parameters, y);
+  WaveformSynthesis3(world_parameters, y);
 }
