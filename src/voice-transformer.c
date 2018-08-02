@@ -240,5 +240,5 @@ void EMSCRIPTEN_KEEPALIVE transform(double *x, WorldParameters *world_parameters
   SpectralEnvelopeEstimation(x, world_parameters);
   AperiodicityEstimation(x, world_parameters);
   ParameterModification(shift, ratio, world_parameters);
-  WaveformSynthesis3(world_parameters, y);
+  WaveformSynthesis(world_parameters, y);
 }
