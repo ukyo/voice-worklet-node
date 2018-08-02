@@ -1,5 +1,5 @@
 importScripts("../dist/foo.js");
-const States = new Int32Array(new SharedArrayBuffer(6 * Int32Array.BYTES_PER_ELEMENT));
+const States = new Int32Array(new SharedArrayBuffer(7 * Int32Array.BYTES_PER_ELEMENT));
 const InputRingBuffer = new Float64Array(new SharedArrayBuffer(524288 /* RING_BUFFER_BYTE_LENGTH */));
 const OutputRingBuffer = new Float64Array(new SharedArrayBuffer(524288 /* RING_BUFFER_BYTE_LENGTH */));
 function init() {
@@ -27,7 +27,7 @@ function doHeavyTask() {
     const inputOffset = (inputCount % 2) * len;
     xF64arr.set(InputRingBuffer.subarray(inputOffset, inputOffset + len));
     inputCount++;
-    Module._transform(x, 256 /* F0_ESTIMATION_BUFFER_LENGTH */ * 128 /* FRAMES_PER_WORKLET_PROCESS */, 48000, 256 /* F0_ESTIMATION_BUFFER_LENGTH */, shift, ratio, y);
+    Module._transform(x, 256 /* F0_ESTIMATION_BUFFER_LENGTH */ * 128 /* FRAMES_PER_WORKLET_PROCESS */, States[6 /* SAMPLE_RATE */], 256 /* F0_ESTIMATION_BUFFER_LENGTH */, shift, ratio, y);
     OutputRingBuffer.set(yF64arr, (outputCount % 2) * len);
     outputCount++;
     Module._free(x);

@@ -4,6 +4,7 @@ declare class AudioWorkletNode {
   constructor(context: AudioContextBase, processorName: string, options: any);
   port: any;
   onInitialized(): void;
+  context: AudioContext;
 }
 
 export interface VoiceWorkletNodeOptions {
@@ -39,6 +40,7 @@ export class VoiceWorkletNode extends AudioWorkletNode {
     this._data = data;
     this.setShift(this._options.shift);
     this.setRatio(this._options.ratio);
+    this.setSampleRate(this.context.sampleRate);
     this.port.postMessage(data.SharedBuffers);
   }
 
@@ -57,6 +59,13 @@ export class VoiceWorkletNode extends AudioWorkletNode {
     if (this._data) {
       const arr = new Int32Array(this._data.SharedBuffers.states);
       arr[STATE.RATIO] = ratio;
+    }
+  }
+
+  setSampleRate(sampleRate: number) {
+    if (this._data) {
+      const arr = new Int32Array(this._data.SharedBuffers.states);
+      arr[STATE.SAMPLE_RATE] = sampleRate;
     }
   }
 }

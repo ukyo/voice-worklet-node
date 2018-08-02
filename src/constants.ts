@@ -13,5 +13,6 @@ export const enum STATE {
   INPUT_INDEX,
   OUTPUT_INDEX,
   SHIFT,
-  RATIO
+  RATIO,
+  SAMPLE_RATE
 }

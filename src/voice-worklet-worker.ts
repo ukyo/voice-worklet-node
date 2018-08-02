@@ -3,7 +3,7 @@ importScripts("../dist/foo.js");
 
 declare var Module: any;
 
-const States = new Int32Array(new SharedArrayBuffer(6 * Int32Array.BYTES_PER_ELEMENT));
+const States = new Int32Array(new SharedArrayBuffer(7 * Int32Array.BYTES_PER_ELEMENT));
 const InputRingBuffer = new Float64Array(new SharedArrayBuffer(CONSTANTS.RING_BUFFER_BYTE_LENGTH));
 const OutputRingBuffer = new Float64Array(new SharedArrayBuffer(CONSTANTS.RING_BUFFER_BYTE_LENGTH));
 
@@ -37,7 +37,7 @@ function doHeavyTask() {
   Module._transform(
     x,
     CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH * CONSTANTS.FRAMES_PER_WORKLET_PROCESS,
-    48000,
+    States[STATE.SAMPLE_RATE],
     CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH,
     shift,
     ratio,
