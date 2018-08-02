@@ -40,7 +40,7 @@ export class VoiceWorkletNode extends AudioWorkletNode {
     setSampleRate(sampleRate) {
         if (this._data) {
             const arr = new Int32Array(this._data.SharedBuffers.states);
-            arr[6 /* SAMPLE_RATE */] = sampleRate;
+            arr[6 /* SAMPLE_RATE */] = Math.ceil(sampleRate / 256 /* F0_ESTIMATION_BUFFER_LENGTH */) * 256 /* F0_ESTIMATION_BUFFER_LENGTH */;
         }
     }
 }

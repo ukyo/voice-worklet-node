@@ -1,4 +1,4 @@
-import { STATE } from "./constants";
+import { STATE, CONSTANTS } from "./constants";
 
 declare class AudioWorkletNode {
   constructor(context: AudioContextBase, processorName: string, options: any);
@@ -65,7 +65,7 @@ export class VoiceWorkletNode extends AudioWorkletNode {
   setSampleRate(sampleRate: number) {
     if (this._data) {
       const arr = new Int32Array(this._data.SharedBuffers.states);
-      arr[STATE.SAMPLE_RATE] = sampleRate;
+      arr[STATE.SAMPLE_RATE] = Math.ceil(sampleRate / CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH) * CONSTANTS.F0_ESTIMATION_BUFFER_LENGTH;
     }
   }
 }
