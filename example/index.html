@@ -54,8 +54,12 @@
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const source = context.createMediaStreamSource(stream);
+      const lowPassFilter = context.createBiquadFilter();
+      lowPassFilter.type = "lowpass";
+      lowPassFilter.frequency.value = 5500;
       source
         .connect(voiceWorkletNode)
+        .connect(lowPassFilter)
         .connect(context.destination);
     })();
   </script>
