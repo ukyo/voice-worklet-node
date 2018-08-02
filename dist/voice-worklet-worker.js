@@ -22,9 +22,7 @@ function init(sharedBuffers) {
         }
         function waitOnRenderRequest() {
             while (Atomics.wait(states, 0 /* REQUEST_RENDER */, 0) === "ok") {
-                const start = performance.now();
                 transform();
-                console.log(performance.now() - start);
                 Atomics.store(states, 0 /* REQUEST_RENDER */, 0);
             }
         }
